@@ -1,0 +1,17 @@
+menu "HTTP Client Configuration"
+
+    config HTTP_CLIENT_URI_GET
+        string "Server Uri"
+        default "http://httpbin.org/get"
+        help
+            Server uri for the example to use. 
+
+
+    config HTTP_CLIENT_URI_IMAGE
+        string "Image Uri"
+        default "http://httpbin.org/image/jpeg"
+        help
+            Server uri for image reader.
+
+endmenu
+
