@@ -1,3 +1,3 @@
 idf_component_register(SRC_DIRS "."
                     INCLUDE_DIRS "."
-                    REQUIRES cmock wifi storage http_client)
+                    REQUIRES cmock wifi http_client)
