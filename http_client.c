@@ -157,7 +157,6 @@ static int _reader(char *url, char *buffer, int len)
     esp_err_t err;
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
-        free(buffer);
         return 0;
     }
     int content_length =  esp_http_client_fetch_headers(client);
