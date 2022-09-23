@@ -35,11 +35,19 @@ $ hexdump -n 15 image.jpg
 ### Snapshot
 - Getting snapshot image from IP Camera
 - Set HTTP Client Configuration **Image Uri** and run test **image reader**
-- Image Uri example for TRASSIR TR-D7121IR1W
+#### URI examples
+- TRASSIR TR-D7121IR1W
 ```
 http://admin:uzh2ndcd@192.168.1.72/action/snap?cam=0
 ```
-
+- D-Link DCS-930L
+```
+http://admin:uzh2ndcd@192.168.1.103/image/jpeg.cgi
+```
+- Foscam FI8918W
+```
+http://admin:@192.168.4.2/snapshot.cgi
+```
 ## Configuration
 
 
