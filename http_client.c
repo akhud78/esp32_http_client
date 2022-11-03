@@ -152,6 +152,11 @@ static int _reader(char *url, char *buffer, int len)
     };
     config.url = url;
     esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) { // if any errors
+        ESP_LOGE(TAG, "%s %d", __func__, __LINE__);
+        return 0; 
+    }
+        
     ESP_LOGI(TAG, "HTTP url: %s ", config.url);
     
     esp_err_t err;
@@ -159,7 +164,12 @@ static int _reader(char *url, char *buffer, int len)
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         return 0;
     }
-    int content_length =  esp_http_client_fetch_headers(client);
+
+    int content_length = esp_http_client_fetch_headers(client);
+    if (content_length <= 0) {
+        ESP_LOGE(TAG, "%s %d", __func__, __LINE__);
+    }
+    
     int total_read_len = 0, read_len;
     if (total_read_len < content_length && content_length <= len) {
         read_len = esp_http_client_read(client, buffer, content_length);
