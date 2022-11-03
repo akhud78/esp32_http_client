@@ -6,7 +6,7 @@
 
 TEST_CASE("get", "[client]")
 {    
-    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL));
+    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
     TEST_ASSERT_EQUAL(ESP_OK, http_client_get(HTTP_CLIENT_URI_GET));
     
     wifi_sta_stop();
@@ -19,7 +19,7 @@ TEST_CASE("image reader", "[client]")
     char *buffer = malloc(BUFFER_LEN + 1);
     TEST_ASSERT_NOT_NULL(buffer); 
     
-    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL));
+    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
     int len = http_client_reader(HTTP_CLIENT_URI_IMAGE, buffer, BUFFER_LEN);
     free(buffer);
     TEST_ASSERT_GREATER_THAN(0, len);
