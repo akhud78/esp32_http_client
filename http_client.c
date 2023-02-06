@@ -139,7 +139,7 @@ static int _get_with_url(char *url)
     if (err == ESP_OK) {
         ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %"PRId32,
                 esp_http_client_get_status_code(client),
-                esp_http_client_get_content_length(client));
+                (uint32_t)esp_http_client_get_content_length(client));
     } else {
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
         ret = -1; // ERROR
@@ -195,7 +195,7 @@ static int _reader(char *url, char *buffer, int len)
     }
     ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
                     esp_http_client_get_status_code(client),
-                    esp_http_client_get_content_length(client));
+                    (uint32_t)esp_http_client_get_content_length(client));
     esp_http_client_close(client);
     esp_http_client_cleanup(client);
     
