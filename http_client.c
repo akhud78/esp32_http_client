@@ -1,6 +1,6 @@
 /* ESP HTTP Client Example
 
-    https://github.com/espressif/esp-idf/blob/v4.3/examples/protocols/esp_http_client/main/esp_http_client_example.c
+    https://github.com/espressif/esp-idf/blob/v5.0/examples/protocols/esp_http_client/main/esp_http_client_example.c
 */
 
 #include <string.h>
@@ -84,15 +84,26 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             int mbedtls_err = 0;
             esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
             if (err != 0) {
-                if (output_buffer != NULL) {
-                    free(output_buffer);
-                    output_buffer = NULL;
-                }
                 output_len = 0;
                 ESP_LOGI(TAG, "Last esp error code: 0x%x", err);
                 ESP_LOGI(TAG, "Last mbedtls failure: 0x%x", mbedtls_err);
             }
+            if (output_buffer != NULL) {
+                free(output_buffer);
+                output_buffer = NULL;
+            }
+            output_len = 0;
             break;
+            
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+        case HTTP_EVENT_REDIRECT:
+            ESP_LOGD(TAG, "HTTP_EVENT_REDIRECT");
+            esp_http_client_set_header(evt->client, "From", "user@example.com");
+            esp_http_client_set_header(evt->client, "Accept", "text/html");
+            esp_http_client_set_redirection(evt->client);
+            break;
+#endif
+            
     }
     return ESP_OK;
 }
@@ -126,7 +137,7 @@ static int _get_with_url(char *url)
     
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %d",
+        ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %"PRId32,
                 esp_http_client_get_status_code(client),
                 esp_http_client_get_content_length(client));
     } else {
@@ -182,7 +193,7 @@ static int _reader(char *url, char *buffer, int len)
         ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
         bytes = read_len;
     }
-    ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %d",
+    ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
                     esp_http_client_get_status_code(client),
                     esp_http_client_get_content_length(client));
     esp_http_client_close(client);
