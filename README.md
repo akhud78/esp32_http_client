@@ -1,11 +1,11 @@
 # esp32_http_client
 HTTP client component
 
-
 ## Links
 
-- [ESP HTTP Client](https://docs.espressif.com/projects/esp-idf/en/v4.4/esp32s3/api-reference/protocols/esp_http_client.html) - API v4.4
-- [esp_http_client_example.c](https://github.com/espressif/esp-idf/blob/v4.4/examples/protocols/esp_http_client/main/esp_http_client_example.c)
+- [ESP HTTP Client](https://docs.espressif.com/projects/esp-idf/en/v5.1.1/esp32s3/api-reference/protocols/esp_http_client.html)
+- [esp_http_client_example.c](https://github.com/espressif/esp-idf/blob/v5.1.1/examples/protocols/esp_http_client/main/esp_http_client_example.c)
+
 
 ## Setup
 - Add [wi-fi component](https://github.com/akhud78/esp32_wifi) into `components` folder.
@@ -56,4 +56,34 @@ http://admin:@192.168.4.2/snapshot.cgi
 (Top) -> Component config -> HTTP Client Configuration
 (http://httpbin.org/get) Server Uri
 (http://httpbin.org/image/jpeg) Image Uri
+```
+
+## Test
+- [data/test](https://github.com/akhud78/esp32_face/tree/main/data/test) - download images
+- [Python SimpleHTTPServer](https://www.digitalocean.com/community/tutorials/python-simplehttpserver-http-server) - use as local file server
+
+```
+$ cd data/test
+$ python3 -m http.server 9000
+Serving HTTP on 0.0.0.0 port 9000 (http://0.0.0.0:9000/) ...
+```
+- Check [localhost:9000](http://localhost:9000/) - `Directory listing for`
+- Set `Image Uri` as an example `http://192.168.1.40:9000/soto_2.jpg`
+- Run test
+```
+$ idf.py -p /dev/ttyUSB0 -D TEST_COMPONENTS="http_client" flash monitor
+...
+Here's the test menu, pick your combo:
+(1)	"get" [client]
+(2)	"image reader" [client]
+...
+Enter test for running.
+2
+Running image reader...
+...
+I (29873) http_client: HTTP url: http://192.168.1.40:9000/soto_2.jpg 
+I (30223) http_client: read_len = 15218
+I (30223) http_client: ff d8 ff e0 00 10 4a 46 
+I (30223) http_client: HTTP Stream reader Status = 200, content_length = 15218
+...
 ```
