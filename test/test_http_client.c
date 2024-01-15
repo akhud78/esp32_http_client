@@ -15,8 +15,8 @@ TEST_CASE("get", "[client]")
 TEST_CASE("image reader", "[client]")
 {
         
-    const int BUFFER_LEN = 60 * 1024;  // 50K
-    char *buffer = malloc(BUFFER_LEN + 1);
+    const int BUFFER_LEN = 60 * 1024;
+    char *buffer = malloc(BUFFER_LEN);
     TEST_ASSERT_NOT_NULL(buffer); 
     
     TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
