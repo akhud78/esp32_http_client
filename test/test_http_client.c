@@ -1,3 +1,5 @@
+#include <string.h>
+#include <ctype.h>
 #include "unity.h"
 #include "sdkconfig.h"
 
@@ -22,8 +24,48 @@ TEST_CASE("image reader", "[client]")
     TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
     int len = http_client_reader(HTTP_CLIENT_URI_IMAGE, buffer, BUFFER_LEN);
     free(buffer);
-    TEST_ASSERT_GREATER_THAN(0, len);
     wifi_sta_stop();
+    TEST_ASSERT_GREATER_THAN(0, len);
 }
+
+// Trim a string
+char *ltrim(char *s)
+{
+    while(isspace((unsigned char)*s)) s++;
+    return s;
+}
+
+TEST_CASE("list reader", "[client]")
+{    
+    const int BUF_LEN = 60 * 1024;
+    char *buf = malloc(BUF_LEN);
+    TEST_ASSERT_NOT_NULL(buf); 
+    
+    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
+    int len = http_client_reader(HTTP_CLIENT_URI_GET "/" HTTP_CLIENT_LIST_NAME, buf, BUF_LEN);
+    TEST_ASSERT_GREATER_THAN(0, len);
+
+    char *buf_list = strdup(buf);
+    char *line = strtok(buf_list, "\n");
+    
+    while (line) {
+        char *file_name = ltrim(line);
+        if (file_name[0] != '#') {  // skip commented lines
+            char url[100] = "";
+            sprintf(url, "%s/%s", HTTP_CLIENT_URI_GET, file_name);
+            len = http_client_reader(url, buf, BUF_LEN);
+            if (len == 0) 
+                break;
+        }
+        line  = strtok(NULL, "\n");
+    }
+    
+    free(buf_list);
+    free(buf);
+    
+    wifi_sta_stop();
+    TEST_ASSERT_GREATER_THAN(0, len);
+}
+
 
 
