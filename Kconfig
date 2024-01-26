@@ -6,6 +6,11 @@ menu "HTTP Client Configuration"
         help
             Server uri for the example to use. 
 
+    config HTTP_CLIENT_LIST_NAME
+        string "Server file list"
+        default "list.txt"
+        help
+            Server file with list of files.
 
     config HTTP_CLIENT_URI_IMAGE
         string "Image Uri"

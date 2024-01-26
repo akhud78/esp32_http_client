@@ -55,10 +55,12 @@ http://admin:@192.168.4.2/snapshot.cgi
 ```
 (Top) -> Component config -> HTTP Client Configuration
 (http://httpbin.org/get) Server Uri
+(list.txt) Server file list
 (http://httpbin.org/image/jpeg) Image Uri
 ```
 
 ## Test
+### Common
 - [data/test](https://github.com/akhud78/esp32_face/tree/main/data/test) - download images
 - [Python SimpleHTTPServer](https://www.digitalocean.com/community/tutorials/python-simplehttpserver-http-server) - use as local file server
 
@@ -86,4 +88,41 @@ I (30223) http_client: read_len = 15218
 I (30223) http_client: ff d8 ff e0 00 10 4a 46 
 I (30223) http_client: HTTP Stream reader Status = 200, content_length = 15218
 ...
+```
+### List reader
+- Create list of files in server directory
+- Run server
+```
+$ cd data/test
+$ ls -p | grep -v / | grep -v "list.txt" > list.txt
+$ python3 -m http.server 9000
+```
+- Check [localhost:9000](http://localhost:9000/)
+- Set `Server Uri` as `http://192.168.1.40:9000/list.txt`
+- Run test
+```
+$ idf.py -p /dev/ttyUSB0 -D TEST_COMPONENTS="http_client" flash monitor
+...
+Here's the test menu, pick your combo:
+...
+(3)	"list reader" [client]
+...
+Enter test for running.
+3
+Running list reader...
+...
+I (4453) http_client: HTTP url: http://192.168.1.40:9000/list.txt 
+I (4753) http_client: read_len = 74
+I (4753) http_client: 49 4d 33 31 36 5f 31 2e 
+I (4753) http_client: HTTP Stream reader Status = 200, content_length = 74
+I (4753) http_client: HTTP url: http://192.168.1.40:9000/IM316_1.JPG 
+I (4793) http_client: read_len = 8793
+I (4793) http_client: ff d8 ff e0 00 10 4a 46 
+I (4793) http_client: HTTP Stream reader Status = 200, content_length = 8793
+I (4803) http_client: HTTP url: http://192.168.1.40:9000/IM319_1.JPG 
+I (4833) http_client: read_len = 8576
+I (4833) http_client: ff d8 ff e0 00 10 4a 46 
+I (4833) http_client: HTTP Stream reader Status = 200, content_length = 8576
+...
+Test ran in 1992ms
 ```
