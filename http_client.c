@@ -13,7 +13,7 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
-#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 #include "http_client.h"
 
