@@ -13,10 +13,9 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 #include "http_client.h"
-
 
 // As default is 512 without setting buffer_size property in esp_http_client_config_t
 #define HTTP_CLIENT_BUFFER_SIZE    (1024 * 3)
@@ -76,7 +75,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             output_len = 0;
             break;
         case HTTP_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
+            ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
             int mbedtls_err = 0;
             esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
             if (err != 0) {
@@ -106,7 +105,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 
 static int post_with_url(char *url, char *content_type, char *post_data, char *response_buffer, size_t buffer_size)
 {
-    ESP_LOGI(TAG, "http_post_with_url url=[%s]", url);
+    ESP_LOGD(TAG, "http_post_with_url url=[%s]", url);
 
     int bytes = 0;
 
@@ -132,8 +131,8 @@ static int post_with_url(char *url, char *content_type, char *post_data, char *r
         if (bytes > 0) {
             response_buffer[bytes] = '\0';
         }
-        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d", status, bytes);
-        ESP_LOGI(TAG, "response_buffer=[%s]", response_buffer);
+        ESP_LOGD(TAG, "HTTP POST Status = %d, content_length = %d", status, bytes);
+        ESP_LOGD(TAG, "response_buffer=[%s]", response_buffer);
     } else {
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
         bytes = 0;
@@ -190,7 +189,7 @@ static int get_with_url(char *url)
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     // GET
-    ESP_LOGI(TAG, "HTTP GET url: %s ", config.url);
+    ESP_LOGD(TAG, "HTTP GET url: %s ", config.url);
     
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
@@ -199,7 +198,7 @@ static int get_with_url(char *url)
         if (bytes >= 0) {
             response_buffer[bytes] = '\0';
         }
-        ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %d", status, bytes);
+        ESP_LOGD(TAG, "HTTP GET Status = %d, content_length = %d", status, bytes);
     } else {
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
         bytes = 0; // ERROR
@@ -227,7 +226,7 @@ static int reader(char *url, char *buffer, int len)
         return 0; 
     }
         
-    ESP_LOGI(TAG, "HTTP url: %s ", config.url);
+    ESP_LOGD(TAG, "HTTP url: %s ", config.url);
     
     esp_err_t err;
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
@@ -248,11 +247,11 @@ static int reader(char *url, char *buffer, int len)
             bytes = 0; 
         }
         buffer[read_len] = 0;
-        ESP_LOGI(TAG, "read_len = %d", read_len);
-        ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
+        ESP_LOGD(TAG, "read_len = %d", read_len);
+        //ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
         bytes = read_len;
     }
-    ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
+    ESP_LOGD(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
                     esp_http_client_get_status_code(client),
                     (uint32_t)esp_http_client_get_content_length(client));
     esp_http_client_close(client);
