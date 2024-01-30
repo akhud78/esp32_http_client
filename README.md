@@ -67,7 +67,8 @@ Here's the test menu, pick your combo:
 (3)	"image reader" [client]
 (4)	"list reader" [client]
 ```
-### Image reader
+### Local file server
+#### Image reader
 - [data/test](https://github.com/akhud78/esp32_face/tree/main/data/test) - download images
 - [Python SimpleHTTPServer](https://www.digitalocean.com/community/tutorials/python-simplehttpserver-http-server) - use as local file server
 
@@ -92,7 +93,7 @@ I (30223) http_client: ff d8 ff e0 00 10 4a 46
 I (30223) http_client: HTTP Stream reader Status = 200, content_length = 15218
 ...
 ```
-### List reader
+#### List reader
 - Create list of files in server directory
 - Run server
 ```
