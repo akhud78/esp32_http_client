@@ -55,12 +55,20 @@ http://admin:@192.168.4.2/snapshot.cgi
 ```
 (Top) -> Component config -> HTTP Client Configuration
 (http://httpbin.org/get) Server Uri
-(list.txt) Server file list
 (http://httpbin.org/image/jpeg) Image Uri
 ```
 
 ## Test
-### Common
+
+```
+Here's the test menu, pick your combo:
+(1)	"get" [client]
+(2)	"post" [client]
+(3)	"image reader" [client]
+(4)	"list reader" [client]
+```
+### Local file server
+#### Image reader
 - [data/test](https://github.com/akhud78/esp32_face/tree/main/data/test) - download images
 - [Python SimpleHTTPServer](https://www.digitalocean.com/community/tutorials/python-simplehttpserver-http-server) - use as local file server
 
@@ -75,12 +83,8 @@ Serving HTTP on 0.0.0.0 port 9000 (http://0.0.0.0:9000/) ...
 ```
 $ idf.py -p /dev/ttyUSB0 -D TEST_COMPONENTS="http_client" flash monitor
 ...
-Here's the test menu, pick your combo:
-(1)	"get" [client]
-(2)	"image reader" [client]
-...
 Enter test for running.
-2
+3
 Running image reader...
 ...
 I (29873) http_client: HTTP url: http://192.168.1.40:9000/soto_2.jpg 
@@ -89,7 +93,7 @@ I (30223) http_client: ff d8 ff e0 00 10 4a 46
 I (30223) http_client: HTTP Stream reader Status = 200, content_length = 15218
 ...
 ```
-### List reader
+#### List reader
 - Create list of files in server directory
 - Run server
 ```
@@ -98,17 +102,13 @@ $ ls -p | grep -v / | grep -v "list.txt" > list.txt
 $ python3 -m http.server 9000
 ```
 - Check [localhost:9000](http://localhost:9000/)
-- Set `Server Uri` as `http://192.168.1.40:9000/list.txt`
+- Set `Server Uri` as `http://192.168.1.40:9000`
 - Run test
 ```
 $ idf.py -p /dev/ttyUSB0 -D TEST_COMPONENTS="http_client" flash monitor
 ...
-Here's the test menu, pick your combo:
-...
-(3)	"list reader" [client]
-...
 Enter test for running.
-3
+4
 Running list reader...
 ...
 I (4453) http_client: HTTP url: http://192.168.1.40:9000/list.txt 

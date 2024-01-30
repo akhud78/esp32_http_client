@@ -1,16 +1,11 @@
-/* ESP HTTP Client Example
-
-    https://github.com/espressif/esp-idf/blob/v5.0/examples/protocols/esp_http_client/main/esp_http_client_example.c
-*/
+// https://github.com/espressif/esp-idf/blob/v5.1.1/examples/protocols/esp_http_client/main/esp_http_client_example.c
 
 #include <string.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "esp_log.h"
 #include "esp_system.h"
-
 #include "esp_event.h"
 #include "esp_netif.h"
 
@@ -18,12 +13,12 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
-#include "sdkconfig.h"
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#include "esp_log.h"
 #include "http_client.h"
 
-#define MAX_HTTP_RECV_BUFFER        512
-#define MAX_HTTP_OUTPUT_BUFFER      1024 //2048
-
+// As default is 512 without setting buffer_size property in esp_http_client_config_t
+#define HTTP_CLIENT_BUFFER_SIZE    (1024 * 3)
 
 static const char *TAG = "http_client";
 
@@ -80,7 +75,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
             output_len = 0;
             break;
         case HTTP_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "HTTP_EVENT_DISCONNECTED");
+            ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
             int mbedtls_err = 0;
             esp_err_t err = esp_tls_get_and_clear_last_error(evt->data, &mbedtls_err, NULL);
             if (err != 0) {
@@ -108,12 +103,73 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-
-static int _get_with_url(char *url)
+static int post_with_url(char *url, char *content_type, char *post_data, char *response_buffer, size_t buffer_size)
 {
-    int ret = 0;  // OK
+    ESP_LOGD(TAG, "http_post_with_url url=[%s]", url);
+
+    int bytes = 0;
+
+    esp_http_client_config_t config = {
+        .event_handler = _http_event_handler,
+        .method = HTTP_METHOD_POST,
+        .disable_auto_redirect = true,
+    };
+    config.url = url;
+    config.buffer_size = buffer_size;
+    config.user_data = response_buffer;
     
-    char local_response_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    
+    esp_http_client_set_header(client, "Content-Type", content_type); 
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
+    
+    esp_err_t err = esp_http_client_perform(client);
+    if (err == ESP_OK) {
+        int status = esp_http_client_get_status_code(client);
+        bytes = esp_http_client_get_content_length(client);
+        assert(bytes < buffer_size); 
+        if (bytes > 0) {
+            response_buffer[bytes] = '\0';
+        }
+        ESP_LOGD(TAG, "HTTP POST Status = %d, content_length = %d", status, bytes);
+        ESP_LOGD(TAG, "response_buffer=[%s]", response_buffer);
+    } else {
+        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+        bytes = 0;
+    }
+
+    esp_http_client_cleanup(client);
+    return bytes;
+}
+
+
+bool http_client_post(char *url, char *post_data)
+{
+    char *response_buffer = (char*)malloc(HTTP_CLIENT_BUFFER_SIZE);  
+    assert(response_buffer != NULL);  
+    response_buffer[0] = '\0';
+    
+    // text/xml application/json
+    int bytes = post_with_url(url, "text/plain", post_data, response_buffer, HTTP_CLIENT_BUFFER_SIZE);
+    free(response_buffer);
+    
+    return bytes > 0 ? true : false;
+}
+
+int http_client_post_request(char *url, char *request, char *buffer, int len)
+{
+    if (buffer == NULL || len == 0)
+        return -1;
+        
+    return post_with_url(url, "text/xml", request, buffer, len);
+}
+
+static int get_with_url(char *url)
+{
+    int bytes = 0;
+    
+    char *response_buffer = (char*)malloc(HTTP_CLIENT_BUFFER_SIZE);    
+    response_buffer[0] = '\0';
     /**
      * NOTE: All the configuration parameters for http_client must be spefied either in URL or as host and path parameters.
      * If host and path parameters are not set, query parameter will be ignored. In such cases,
@@ -124,38 +180,40 @@ static int _get_with_url(char *url)
     esp_http_client_config_t config = {
         //.host = "httpbin.org",
         //.path = "/get",
-        .query = "esp",
+        //.query = "esp",
         .event_handler = _http_event_handler,
-        .user_data = local_response_buffer,        // Pass address of local buffer to get response
+        .user_data = response_buffer,        // Pass address of local buffer to get response
         .disable_auto_redirect = true,
     };
     config.url = url;
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     // GET
-    ESP_LOGI(TAG, "HTTP GET url: %s ", config.url);
+    ESP_LOGD(TAG, "HTTP GET url: %s ", config.url);
     
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP GET Status = %d, content_length = %"PRId32,
-                esp_http_client_get_status_code(client),
-                (uint32_t)esp_http_client_get_content_length(client));
+        int status = esp_http_client_get_status_code(client);
+        bytes = esp_http_client_get_content_length(client);
+        if (bytes >= 0) {
+            response_buffer[bytes] = '\0';
+        }
+        ESP_LOGD(TAG, "HTTP GET Status = %d, content_length = %d", status, bytes);
     } else {
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
-        ret = -1; // ERROR
+        bytes = 0; // ERROR
     }
     
-    ESP_LOG_BUFFER_HEX(TAG, local_response_buffer, strlen(local_response_buffer));
-    
+    ESP_LOG_BUFFER_HEX(TAG, response_buffer, strlen(response_buffer));
     
     esp_http_client_cleanup(client);
-    
-    return ret;
+    free(response_buffer);
+    return bytes;
 }
 
-static int _reader(char *url, char *buffer, int len)
+static int reader(char *url, char *buffer, int len)
 {
-    int bytes = 0; // OK
+    int bytes = 0;
 
     esp_http_client_config_t config = {
         .auth_type = HTTP_AUTH_TYPE_BASIC,
@@ -168,7 +226,7 @@ static int _reader(char *url, char *buffer, int len)
         return 0; 
     }
         
-    ESP_LOGI(TAG, "HTTP url: %s ", config.url);
+    ESP_LOGD(TAG, "HTTP url: %s ", config.url);
     
     esp_err_t err;
     if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
@@ -189,11 +247,11 @@ static int _reader(char *url, char *buffer, int len)
             bytes = 0; 
         }
         buffer[read_len] = 0;
-        ESP_LOGI(TAG, "read_len = %d", read_len);
-        ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
+        ESP_LOGD(TAG, "read_len = %d", read_len);
+        //ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
         bytes = read_len;
     }
-    ESP_LOGI(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
+    ESP_LOGD(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
                     esp_http_client_get_status_code(client),
                     (uint32_t)esp_http_client_get_content_length(client));
     esp_http_client_close(client);
@@ -205,7 +263,7 @@ static int _reader(char *url, char *buffer, int len)
 /*
 static void _get_with_url_task(void *pvParameters)
 {
-    _get_with_url();
+    get_with_url();
     
     vTaskDelay(4000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "_get_with_url_task finished.");
@@ -213,23 +271,22 @@ static void _get_with_url_task(void *pvParameters)
 }
 */
 
-esp_err_t http_client_get(char *url)
+bool http_client_get(char *url)
 {
-    esp_err_t ret = ESP_OK;
-    
     //xTaskCreate(&_get_task, "_get_with_url_task", 8192, NULL, 5, NULL);
     
-    if (_get_with_url(url)) ret = ESP_FAIL;
+    int bytes = get_with_url(url);
     
-    return ret;
+    return bytes > 0 ? true : false;
 }
 
 
 int http_client_reader(char *url, char *buffer, int len)
 {
     
-    return _reader(url, buffer, len);
+    return reader(url, buffer, len);
 }
+
 
 
 
