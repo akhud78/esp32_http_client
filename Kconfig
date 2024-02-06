@@ -1,13 +1,19 @@
 menu "HTTP Client Configuration"
 
     config HTTP_CLIENT_URI_GET
-        string "Server Uri"
+        string "Server URI GET"
         default "http://httpbin.org/get"
         help
-            Server uri for the example to use. 
+            Server uri get for the example to use. 
+
+    config HTTP_CLIENT_URI_POST
+        string "Server URI POST"
+        default "http://httpbin.org/post"
+        help
+            Server uri post for the example to use. 
 
     config HTTP_CLIENT_URI_IMAGE
-        string "Image Uri"
+        string "Image URI"
         default "http://httpbin.org/image/jpeg"
         help
             Server uri for image reader.

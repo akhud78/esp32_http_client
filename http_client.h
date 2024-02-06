@@ -2,9 +2,9 @@
 #define HTTP_CLIENT_H
 
 /* The examples use HTTP configuration that you can set via project configuration menu */
-#define HTTP_CLIENT_URI_GET         CONFIG_HTTP_CLIENT_URI_GET    // http://httpbin.org/get
-#define HTTP_CLIENT_URI_POST        "http://httpbin.org/post"
-#define HTTP_CLIENT_URI_IMAGE       CONFIG_HTTP_CLIENT_URI_IMAGE  // http://httpbin.org/image/jpeg
+#define HTTP_CLIENT_URI_GET         CONFIG_HTTP_CLIENT_URI_GET      // http://httpbin.org/get
+#define HTTP_CLIENT_URI_POST        CONFIG_HTTP_CLIENT_URI_POST     // "http://httpbin.org/post"
+#define HTTP_CLIENT_URI_IMAGE       CONFIG_HTTP_CLIENT_URI_IMAGE    // http://httpbin.org/image/jpeg
 #define HTTP_CLIENT_LIST_NAME       "list.txt"
         
 #ifdef __cplusplus

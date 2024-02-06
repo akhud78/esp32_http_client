@@ -13,7 +13,7 @@
 #include "esp_crt_bundle.h"
 #include "esp_http_client.h"
 
-//#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
+#define LOG_LOCAL_LEVEL ESP_LOG_DEBUG
 #include "esp_log.h"
 #include "http_client.h"
 
@@ -127,12 +127,15 @@ static int post_with_url(char *url, char *content_type, char *post_data, char *r
     if (err == ESP_OK) {
         int status = esp_http_client_get_status_code(client);
         bytes = esp_http_client_get_content_length(client);
-        assert(bytes < buffer_size); 
-        if (bytes > 0) {
-            response_buffer[bytes] = '\0';
-        }
         ESP_LOGD(TAG, "HTTP POST Status = %d, content_length = %d", status, bytes);
-        ESP_LOGD(TAG, "response_buffer=[%s]", response_buffer);
+        if (bytes > 0 && bytes < buffer_size) {
+            response_buffer[bytes] = '\0';
+            ESP_LOGD(TAG, "response_buffer=[%s]", response_buffer);
+        } else {  
+            // D (5114) http_client: HTTP POST Status = 404, content_length = -1
+            // TODO!!!
+            bytes = 0;
+        }
     } else {
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
         bytes = 0;
