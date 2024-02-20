@@ -15,7 +15,7 @@ TEST_CASE("get", "[client]")
 TEST_CASE("post", "[client]")
 {    
     TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
-    TEST_ASSERT_GREATER_THAN(0, http_client_post(HTTP_CLIENT_URI_POST, "hello"));
+    TEST_ASSERT_GREATER_THAN(0, http_client_post_plain(HTTP_CLIENT_URI_POST, "hello"));
 
     wifi_sta_stop();
 }

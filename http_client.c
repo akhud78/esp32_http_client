@@ -146,7 +146,7 @@ static int post_with_url(char *url, char *content_type, char *post_data, char *r
 }
 
 
-bool http_client_post(char *url, char *post_data)
+bool http_client_post_plain(char *url, char *post_data)
 {
     char *response_buffer = (char*)malloc(HTTP_CLIENT_BUFFER_SIZE);  
     assert(response_buffer != NULL);  
@@ -159,13 +159,15 @@ bool http_client_post(char *url, char *post_data)
     return bytes > 0 ? true : false;
 }
 
-int http_client_post_request(char *url, char *request, char *buffer, int len)
+
+int http_client_post(char *url, char *content_type, char *post_data, char *response_buffer, size_t buffer_size)
 {
-    if (buffer == NULL || len == 0)
+    if (response_buffer == NULL || buffer_size == 0)
         return -1;
         
-    return post_with_url(url, "text/xml", request, buffer, len);
+    return post_with_url(url, content_type, post_data, response_buffer, buffer_size);
 }
+
 
 static int get_with_url(char *url)
 {
