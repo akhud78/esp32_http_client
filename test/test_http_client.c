@@ -73,4 +73,3 @@ TEST_CASE("list reader", "[client]")
     TEST_ASSERT_GREATER_THAN(0, bytes);
 }
 
-

@@ -215,7 +215,8 @@ static int get_with_url(char *url)
     free(response_buffer);
     return bytes;
 }
-
+// https://github.com/espressif/esp-idf/blob/release/v5.2/examples/protocols/esp_http_client/main/esp_http_client_example.c
+// https://github.com/espressif/esp-idf/blob/master/examples/protocols/esp_http_client/main/esp_http_client_example.c#L718C5-L718C57
 static int reader(char *url, char *buffer, int len)
 {
     int bytes = 0;
@@ -234,7 +235,8 @@ static int reader(char *url, char *buffer, int len)
     ESP_LOGD(TAG, "HTTP url: %s ", config.url);
     
     esp_err_t err;
-    if ((err = esp_http_client_open(client, 0)) != ESP_OK) {
+    if ((err = esp_http_client_open(client, -1)) != ESP_OK) {  // write_len=-1 sets header "Transfer-Encoding: chunked" 
+                                                               // and method to POST
         ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
         return 0;
     }
@@ -245,16 +247,21 @@ static int reader(char *url, char *buffer, int len)
     }
     
     int total_read_len = 0, read_len;
-    if (total_read_len < content_length && content_length <= len) {
-        read_len = esp_http_client_read(client, buffer, content_length);
-        if (read_len <= 0) {
-            ESP_LOGE(TAG, "Error read data");
-            bytes = 0; 
+    
+    if (content_length > len) {
+        ESP_LOGW(TAG, "%s content_length: %d > len: %d", content_length, len);
+    } else {        
+        if (total_read_len < content_length) {
+            read_len = esp_http_client_read(client, buffer, content_length);
+            if (read_len <= 0) {
+                ESP_LOGE(TAG, "Error read data");
+                bytes = 0; 
+            }
+            buffer[read_len] = 0;
+            ESP_LOGD(TAG, "read_len = %d", read_len);
+            //ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
+            bytes = read_len;
         }
-        buffer[read_len] = 0;
-        ESP_LOGD(TAG, "read_len = %d", read_len);
-        //ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
-        bytes = read_len;
     }
     ESP_LOGD(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
                     esp_http_client_get_status_code(client),
