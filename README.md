@@ -65,7 +65,8 @@ Here's the test menu, pick your combo:
 (1)	"get" [client]
 (2)	"post" [client]
 (3)	"image reader" [client]
-(4)	"list reader" [client]
+(4)	"image loader" [client]
+(5)	"list reader" [client]
 ```
 ### Local file server
 #### Image reader
@@ -108,7 +109,7 @@ $ python3 -m http.server 9000
 $ idf.py -p /dev/ttyUSB0 -D TEST_COMPONENTS="http_client" flash monitor
 ...
 Enter test for running.
-4
+5
 Running list reader...
 ...
 I (4453) http_client: HTTP url: http://192.168.1.40:9000/list.txt 

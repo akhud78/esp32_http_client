@@ -1,9 +1,13 @@
 #include <string.h>
 #include <ctype.h>
 #include "unity.h"
-
+#include "esp_log.h"
+#include "esp_system.h"
+#include "esp_heap_caps.h"
 #include "wifi.h"
 #include "http_client.h"
+
+static const char TAG[] = "test_http_client";
 
 TEST_CASE("get", "[client]")
 {    
@@ -33,6 +37,22 @@ TEST_CASE("image reader", "[client]")
     wifi_sta_stop();
     TEST_ASSERT_GREATER_THAN(0, bytes);
 }
+
+TEST_CASE("image loader", "[client]")
+{
+    TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
+    
+    char *buffer = NULL;
+    int bytes = http_client_loader(HTTP_CLIENT_URI_IMAGE, &buffer);
+    if (bytes > 0) {
+        free(buffer);
+    }
+    wifi_sta_stop();
+    TEST_ASSERT_GREATER_THAN(0, bytes);
+    TEST_ASSERT_TRUE(heap_caps_check_integrity_all(true));
+    ESP_LOGI(TAG, "free heap size: %d", esp_get_free_heap_size());
+}
+
 
 // Trim a string
 char *ltrim(char *s)

@@ -8,6 +8,7 @@
 #include "esp_system.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "esp_timer.h"
 
 #include "esp_tls.h"
 #include "esp_crt_bundle.h"
@@ -123,7 +124,11 @@ static int post_with_url(char *url, char *content_type, char *post_data, char *r
     esp_http_client_set_header(client, "Content-Type", content_type); 
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
     
+    uint64_t start = esp_timer_get_time();
     esp_err_t err = esp_http_client_perform(client);
+    uint64_t run_time_ms = (esp_timer_get_time() - start)/1000;
+    ESP_LOGD(TAG, "%s esp_http_client_perform %llu ms", __func__, run_time_ms);
+    
     if (err == ESP_OK) {
         int status = esp_http_client_get_status_code(client);
         bytes = esp_http_client_get_content_length(client);
@@ -228,11 +233,9 @@ static int reader(char *url, char *buffer, int len)
     config.url = url;
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (client == NULL) { // if any errors
-        ESP_LOGE(TAG, "%s %d", __func__, __LINE__);
+        ESP_LOGE(TAG, "%s init", __func__);
         return 0; 
     }
-        
-    ESP_LOGD(TAG, "HTTP url: %s ", config.url);
     
     esp_err_t err;
     if ((err = esp_http_client_open(client, -1)) != ESP_OK) {  // write_len=-1 sets header "Transfer-Encoding: chunked" 
@@ -243,13 +246,12 @@ static int reader(char *url, char *buffer, int len)
 
     int content_length = esp_http_client_fetch_headers(client);
     if (content_length <= 0) {
-        ESP_LOGE(TAG, "%s %d", __func__, __LINE__);
+        ESP_LOGE(TAG, "%s fetch", __func__);
     }
-    
     int total_read_len = 0, read_len;
     
     if (content_length > len) {
-        ESP_LOGW(TAG, "%s content_length: %d > len: %d", content_length, len);
+        ESP_LOGW(TAG, "content_length: %d > len: %d", content_length, len);
     } else {        
         if (total_read_len < content_length) {
             read_len = esp_http_client_read(client, buffer, content_length);
@@ -258,19 +260,68 @@ static int reader(char *url, char *buffer, int len)
                 bytes = 0; 
             }
             buffer[read_len] = 0;
-            ESP_LOGD(TAG, "read_len = %d", read_len);
             //ESP_LOG_BUFFER_HEX(TAG, buffer, 8); // first bytes
             bytes = read_len;
         }
     }
-    ESP_LOGD(TAG, "HTTP Stream reader Status = %d, content_length = %"PRId32,
-                    esp_http_client_get_status_code(client),
+    ESP_LOGD(TAG, "status_code: %d, content_length: %d", esp_http_client_get_status_code(client),
                     (uint32_t)esp_http_client_get_content_length(client));
     esp_http_client_close(client);
     esp_http_client_cleanup(client);
     
     return bytes;
 }
+
+// out - You MUST free the pointer once you are done with it!
+int http_client_loader(char *url, char **buffer)
+{
+    int bytes = 0;
+    
+    esp_http_client_config_t config = {
+        .auth_type = HTTP_AUTH_TYPE_BASIC,
+        .max_authorization_retries = -1,
+    };
+    config.url = url;
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        return 0; 
+    }    
+
+    esp_err_t err;
+    if ((err = esp_http_client_open(client, -1)) != ESP_OK) {  // write_len=-1 sets header "Transfer-Encoding: chunked" 
+                                                               // and method to POST
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        return 0;
+    }
+
+    int content_length = esp_http_client_fetch_headers(client);
+    if (content_length <= 0) {
+        return 0;
+    }
+    size_t buffer_size = content_length + 1;
+    *buffer = (char*)heap_caps_malloc(buffer_size, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+    if (*buffer == NULL) {
+        ESP_LOGE(TAG, "%s Memory allocation for %d bytes failed", __func__, buffer_size); 
+        return 0;
+    }
+
+    int read_len = esp_http_client_read(client, *buffer, content_length);
+    if (read_len <= 0) {
+        ESP_LOGE(TAG, "Error read data");
+        free(*buffer);
+        return 0; 
+    }
+    buffer[read_len] = 0;
+    bytes = read_len;
+
+    ESP_LOGD(TAG, "status_code: %d, content_length: %d", esp_http_client_get_status_code(client),
+                    (uint32_t)esp_http_client_get_content_length(client));
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+    
+    return bytes;
+}
+
 
 /*
 static void _get_with_url_task(void *pvParameters)
@@ -298,6 +349,9 @@ int http_client_reader(char *url, char *buffer, int len)
     
     return reader(url, buffer, len);
 }
+
+
+
 
 
 
