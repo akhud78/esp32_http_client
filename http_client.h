@@ -14,6 +14,8 @@ extern "C" {
 #include <stdbool.h>
 
 bool http_client_get(char *url);
+int http_client_get_native(char *url, char **buffer);
+
 int http_client_reader(char *url, char *buffer, int len);
 int http_client_loader(char *url, char **buffer);
 
