@@ -14,10 +14,11 @@ extern "C" {
 #include <stdbool.h>
 
 bool http_client_get(char *url);
-int http_client_get_native(char *url, char **buffer);
+// chunked=true sets header "Transfer-Encoding: chunked"
+int http_client_get_native(char *url, char **buffer, bool chunked);
 
 int http_client_reader(char *url, char *buffer, int len);
-int http_client_loader(char *url, char **buffer);
+//int http_client_loader(char *url, char **buffer);
 
 bool http_client_post_plain(char *url, char *post_data);
 int http_client_post(char *url, char *content_type, char *post_data, char *response_buffer, size_t buffer_size);
