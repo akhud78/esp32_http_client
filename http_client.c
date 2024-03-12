@@ -220,6 +220,62 @@ static int get_with_url(char *url)
     free(response_buffer);
     return bytes;
 }
+
+// https://github.com/espressif/esp-idf/blob/release/v5.1/examples/protocols/esp_http_client/main/esp_http_client_example.c#L679
+// buffer - You MUST free the pointer once you are done with it!
+int http_client_get_native(char *url, char **buffer, bool chunked)
+{
+    int bytes = 0;
+    
+    esp_http_client_config_t config = {
+        .auth_type = HTTP_AUTH_TYPE_BASIC,
+        .max_authorization_retries = -1,
+    };
+    config.url = url;
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        return 0; 
+    }    
+
+    // https://github.com/espressif/esp-idf/blob/release/v5.1/components/esp_http_client/esp_http_client.c#L1426
+    int write_len = 0;
+    if (chunked)        // write_len=-1 sets header "Transfer-Encoding: chunked" 
+        write_len = -1;
+    esp_err_t err;        
+    
+    if ((err = esp_http_client_open(client, write_len)) != ESP_OK) { 
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        return 0;
+    }
+
+    int content_length = esp_http_client_fetch_headers(client);
+    if (content_length <= 0) {
+        return 0;
+    }
+    size_t buffer_size = content_length + 1;
+    *buffer = (char*)calloc(buffer_size, sizeof(char));
+    if (*buffer == NULL) {
+        ESP_LOGE(TAG, "%s Memory allocation for %d bytes failed", __func__, buffer_size); 
+        return 0;
+    }
+
+    int read_len = esp_http_client_read(client, *buffer, content_length);
+    if (read_len <= 0) {
+        ESP_LOGE(TAG, "Error read data");
+        free(*buffer);
+        return 0; 
+    }
+    buffer[read_len] = 0;
+    bytes = read_len;
+
+    ESP_LOGD(TAG, "status_code: %d, content_length: %d", esp_http_client_get_status_code(client),
+                    (uint32_t)esp_http_client_get_content_length(client));
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+    
+    return bytes;
+}
+
 // https://github.com/espressif/esp-idf/blob/release/v5.2/examples/protocols/esp_http_client/main/esp_http_client_example.c
 // https://github.com/espressif/esp-idf/blob/master/examples/protocols/esp_http_client/main/esp_http_client_example.c#L718C5-L718C57
 static int reader(char *url, char *buffer, int len)
@@ -271,57 +327,6 @@ static int reader(char *url, char *buffer, int len)
     
     return bytes;
 }
-
-// out - You MUST free the pointer once you are done with it!
-int http_client_loader(char *url, char **buffer)
-{
-    int bytes = 0;
-    
-    esp_http_client_config_t config = {
-        .auth_type = HTTP_AUTH_TYPE_BASIC,
-        .max_authorization_retries = -1,
-    };
-    config.url = url;
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    if (client == NULL) {
-        return 0; 
-    }    
-
-    esp_err_t err;
-    if ((err = esp_http_client_open(client, -1)) != ESP_OK) {  // write_len=-1 sets header "Transfer-Encoding: chunked" 
-                                                               // and method to POST
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
-        return 0;
-    }
-
-    int content_length = esp_http_client_fetch_headers(client);
-    if (content_length <= 0) {
-        return 0;
-    }
-    size_t buffer_size = content_length + 1;
-    *buffer = (char*)heap_caps_malloc(buffer_size, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
-    if (*buffer == NULL) {
-        ESP_LOGE(TAG, "%s Memory allocation for %d bytes failed", __func__, buffer_size); 
-        return 0;
-    }
-
-    int read_len = esp_http_client_read(client, *buffer, content_length);
-    if (read_len <= 0) {
-        ESP_LOGE(TAG, "Error read data");
-        free(*buffer);
-        return 0; 
-    }
-    buffer[read_len] = 0;
-    bytes = read_len;
-
-    ESP_LOGD(TAG, "status_code: %d, content_length: %d", esp_http_client_get_status_code(client),
-                    (uint32_t)esp_http_client_get_content_length(client));
-    esp_http_client_close(client);
-    esp_http_client_cleanup(client);
-    
-    return bytes;
-}
-
 
 /*
 static void _get_with_url_task(void *pvParameters)

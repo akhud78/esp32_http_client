@@ -38,17 +38,29 @@ TEST_CASE("image reader", "[client]")
     TEST_ASSERT_GREATER_THAN(0, bytes);
 }
 
-TEST_CASE("image loader", "[client]")
+TEST_CASE("image get native", "[client]")
 {
     TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
     
     char *buffer = NULL;
-    int bytes = http_client_loader(HTTP_CLIENT_URI_IMAGE, &buffer);
+    bool chunked = false;
+    int bytes = http_client_get_native(HTTP_CLIENT_URI_IMAGE, &buffer, chunked);
     if (bytes > 0) {
         free(buffer);
     }
+    TEST_ASSERT_GREATER_THAN(0, bytes);    
+    ESP_LOGI(TAG, "bytes: %d chunked: %d", bytes, chunked);
+    
+    chunked = true;
+    bytes = http_client_get_native(HTTP_CLIENT_URI_IMAGE, &buffer, chunked);
+    if (bytes > 0) {
+        free(buffer);
+    }
+    TEST_ASSERT_GREATER_THAN(0, bytes); 
+    ESP_LOGI(TAG, "bytes: %d chunked: %d", bytes, chunked);    
+    
     wifi_sta_stop();
-    TEST_ASSERT_GREATER_THAN(0, bytes);
+
     TEST_ASSERT_TRUE(heap_caps_check_integrity_all(true));
     ESP_LOGI(TAG, "free heap size: %d", esp_get_free_heap_size());
 }
