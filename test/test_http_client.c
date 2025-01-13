@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_heap_caps.h"
+#include "esp_timer.h"
 #include "wifi.h"
 #include "http_client.h"
 
@@ -32,10 +33,15 @@ TEST_CASE("image reader", "[client]")
     TEST_ASSERT_NOT_NULL(buffer); 
     
     TEST_ASSERT_EQUAL(ESP_OK, wifi_sta_start(WIFI_STA_SSID, WIFI_STA_PASS, NULL, 0,0));
+    uint64_t start = esp_timer_get_time(); 
     int bytes = http_client_reader(HTTP_CLIENT_URI_IMAGE, buffer, BUFFER_LEN);
+    uint64_t end = esp_timer_get_time();
     free(buffer);
-    wifi_sta_stop();
+    wifi_sta_stop();    
+    uint64_t time_ms = (end - start) / 1000;
     TEST_ASSERT_GREATER_THAN(0, bytes);
+    int rate_bps = bytes * 1000 * 8 / time_ms; // bits per sec
+    ESP_LOGI(TAG, "bytes: %d time_ms: %llu rate_bps: %d", bytes, time_ms, rate_bps);
 }
 
 TEST_CASE("image get native", "[client]")
@@ -44,20 +50,28 @@ TEST_CASE("image get native", "[client]")
     
     char *buffer = NULL;
     bool chunked = false;
+    uint64_t start = esp_timer_get_time(); 
     int bytes = http_client_get_native(HTTP_CLIENT_URI_IMAGE, &buffer, chunked);
     if (bytes > 0) {
         free(buffer);
     }
-    TEST_ASSERT_GREATER_THAN(0, bytes);    
-    ESP_LOGI(TAG, "bytes: %d chunked: %d", bytes, chunked);
+    uint64_t end = esp_timer_get_time();
+    TEST_ASSERT_GREATER_THAN(0, bytes); 
+    uint64_t time_ms = (end - start) / 1000;
+    int rate_bps = bytes * 1000 * 8 / time_ms; 
+    ESP_LOGI(TAG, "bytes: %d chunked: %d time_ms: %llu rate_bps: %d", bytes, chunked, time_ms, rate_bps);
     
     chunked = true;
+    start = esp_timer_get_time();
     bytes = http_client_get_native(HTTP_CLIENT_URI_IMAGE, &buffer, chunked);
     if (bytes > 0) {
         free(buffer);
     }
     TEST_ASSERT_GREATER_THAN(0, bytes); 
-    ESP_LOGI(TAG, "bytes: %d chunked: %d", bytes, chunked);    
+    end = esp_timer_get_time();
+    time_ms = (end - start) / 1000;
+    rate_bps = bytes * 1000 * 8 / time_ms; 
+    ESP_LOGI(TAG, "bytes: %d chunked: %d time_ms: %llu rate_bps: %d", bytes, chunked, time_ms, rate_bps);
     
     wifi_sta_stop();
 

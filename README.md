@@ -3,8 +3,8 @@ HTTP client component
 
 ## Links
 
-- [ESP HTTP Client](https://docs.espressif.com/projects/esp-idf/en/v5.1.1/esp32s3/api-reference/protocols/esp_http_client.html)
-- [esp_http_client_example.c](https://github.com/espressif/esp-idf/blob/v5.1.1/examples/protocols/esp_http_client/main/esp_http_client_example.c)
+- [ESP HTTP Client](https://docs.espressif.com/projects/esp-idf/en/v5.4/esp32s3/api-reference/protocols/esp_http_client.html)
+- [esp_http_client_example.c](https://github.com/espressif/esp-idf/blob/v5.4/examples/protocols/esp_http_client/main/esp_http_client_example.c)
 - [How to use esp_http_client to send chunked data?](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/protocols/http.html#how-to-use-esp-http-client-to-send-chunked-data)
 
 
@@ -97,8 +97,8 @@ I (30223) http_client: HTTP Stream reader Status = 200, content_length = 15218
 ```
 #### Image get native
 ```
-I (44369) test_http_client: bytes: 35588 chunked: 0
-I (46209) test_http_client: bytes: 35588 chunked: 1
+I (310724) test_http_client: bytes: 35588 chunked: 0 time_ms: 1863 rate_bps: 152820
+I (312624) test_http_client: bytes: 35588 chunked: 1 time_ms: 1900 rate_bps: 149844
 ```
 
 #### List reader
